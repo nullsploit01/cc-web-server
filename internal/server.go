@@ -1,7 +1,10 @@
 package internal
 
 import (
+	"bufio"
 	"fmt"
+	"io"
+	"log"
 	"net"
 	"sync"
 )
@@ -34,5 +37,23 @@ func (s *Server) StartServer() error {
 			continue
 		}
 		go s.handleConnection(c)
+	}
+}
+
+func (s *Server) handleConnection(conn net.Conn) {
+	defer conn.Close()
+	reader := bufio.NewReader(conn)
+	fmt.Printf("Accepted connection from %s\n", conn.RemoteAddr().String())
+
+	for {
+		command, err := reader.ReadString('\n')
+		if err != nil {
+			if err != io.EOF {
+				fmt.Println("Error reading from client:", err)
+			}
+			break
+		}
+
+		log.Println(command)
 	}
 }
