@@ -3,23 +3,21 @@ package internal
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
+	"path/filepath"
 	"strings"
-	"sync"
 )
 
+const rootDir = "./www"
+
 type Server struct {
-	port  string
-	store map[string]string
-	mu    sync.RWMutex
+	port string
 }
 
 func InitServer(port string) *Server {
 	return &Server{
-		port:  port,
-		store: make(map[string]string),
+		port: port,
 	}
 }
 
@@ -41,10 +39,18 @@ func (s *Server) StartServer() error {
 	}
 }
 
-func ServeFile(conn net.Conn, filePath string) {
-	content, err := ioutil.ReadFile(filePath)
+func ServeFile(conn net.Conn, path string) {
+	cleanPath := filepath.Clean(path)
+	fullPath := filepath.Join(rootDir, cleanPath)
+
+	if !strings.HasPrefix(fullPath, filepath.Clean(rootDir)) {
+		HTTPResponse(conn, 403, "Forbidden", "text/plain")
+		return
+	}
+
+	content, err := os.ReadFile(fullPath)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if strings.Contains(err.Error(), "no such file or directory") {
 			HTTPResponse(conn, 404, "File Not Found", "text/plain")
 		} else {
 			HTTPResponse(conn, 500, "Internal Server Error", "text/plain")
