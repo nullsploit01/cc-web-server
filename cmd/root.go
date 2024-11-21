@@ -1,6 +1,3 @@
-/*
-Copyright © 2024 NAME HERE <EMAIL ADDRESS>
-*/
 package cmd
 
 import (
@@ -13,14 +10,19 @@ import (
 var port string
 
 var rootCmd = &cobra.Command{
-	Use:   "cc-web-server",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Use:   "ccws [flags]",
+	Short: "A simple web server built with Go",
+	Long: `ccws is a lightweight web server built with Go. 
+It serves static files and demonstrates handling HTTP requests. 
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Examples:
+  # Start the server on the default port (8080):
+  ccws
+
+  # Start the server on a custom port:
+  ccws --port 9090
+  ccws -p 9090`,
+
 	Run: func(cmd *cobra.Command, args []string) {
 		s := internal.InitServer(port)
 		s.StartServer()
