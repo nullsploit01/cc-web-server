@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-const rootDir = "./www"
+var rootDir = "./www"
 
 type Server struct {
 	port string
