@@ -63,8 +63,11 @@ func ServeFile(conn net.Conn, path string) {
 func HTTPResponse(conn net.Conn, statusCode int, body string, contentType string) {
 	statusText := map[int]string{
 		200: "OK",
+		403: "Forbidden",
 		404: "Not Found",
+		405: "Method Not Allowed",
 		500: "Internal Server Error",
+		505: "HTTP Version Not Supported",
 	}[statusCode]
 
 	response := fmt.Sprintf(
