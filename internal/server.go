@@ -3,7 +3,9 @@ package internal
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
 	"strings"
 	"sync"
 )
@@ -39,7 +41,20 @@ func (s *Server) StartServer() error {
 	}
 }
 
-func HTTPResponse(conn net.Conn, statusCode int, body string) {
+func ServeFile(conn net.Conn, filePath string) {
+	content, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			HTTPResponse(conn, 404, "File Not Found", "text/plain")
+		} else {
+			HTTPResponse(conn, 500, "Internal Server Error", "text/plain")
+		}
+		return
+	}
+	HTTPResponse(conn, 200, string(content), "text/html")
+}
+
+func HTTPResponse(conn net.Conn, statusCode int, body string, contentType string) {
 	statusText := map[int]string{
 		200: "OK",
 		404: "Not Found",
@@ -47,8 +62,8 @@ func HTTPResponse(conn net.Conn, statusCode int, body string) {
 	}[statusCode]
 
 	response := fmt.Sprintf(
-		"HTTP/1.1 %d %s\r\nContent-Length: %d\r\nContent-Type: text/plain\r\n\r\n%s",
-		statusCode, statusText, len(body), body,
+		"HTTP/1.1 %d %s\r\nContent-Length: %d\r\nContent-Type: %s\r\n\r\n%s",
+		statusCode, statusText, len(body), contentType, body,
 	)
 
 	conn.Write([]byte(response))
@@ -68,7 +83,7 @@ func HandleConnection(conn net.Conn) {
 	requestLine = strings.TrimSpace(requestLine)
 	parts := strings.Split(requestLine, " ")
 	if len(parts) < 3 {
-		HTTPResponse(conn, 400, "Bad Request")
+		HTTPResponse(conn, 400, "Bad Request", "text/plain")
 		return
 	}
 
@@ -76,16 +91,18 @@ func HandleConnection(conn net.Conn) {
 	fmt.Printf("Method: %s, Path: %s, Protocol: %s\n", method, path, protocol)
 
 	if protocol != "HTTP/1.1" {
-		HTTPResponse(conn, 505, "HTTP Version Not Supported")
+		HTTPResponse(conn, 505, "HTTP Version Not Supported", "text/plain")
 		return
 	}
 
-	switch path {
-	case "/":
-		HTTPResponse(conn, 200, "Working"+"\n")
-	case "/sup":
-		HTTPResponse(conn, 200, "Sup"+"\n")
-	default:
-		HTTPResponse(conn, 404, "Not Found"+"\n")
+	if method != "GET" {
+		HTTPResponse(conn, 405, "Method Not Allowed", "text/plain")
+		return
 	}
+
+	if path == "/" {
+		path = "/index.html"
+	}
+	filePath := "." + path
+	ServeFile(conn, filePath)
 }
