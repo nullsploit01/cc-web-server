@@ -53,19 +53,19 @@ To run the server, execute the compiled binary. You can specify the port using t
 
 ### Examples of Accessing the Server
 
-    1.	Access the root endpoint to serve index.html:
+**Access the root endpoint to serve index.html:**
 
 ```bash
 curl http://localhost:8080/
 ```
 
-    2.	Request a specific file (e.g., hello.html):
+**Request a specific file (e.g., hello.html):**
 
 ```bash
 curl http://localhost:8080/hello.html
 ```
 
-    3.	Attempt to access a non-existent file:
+**Attempt to access a non-existent file:**
 
 ```bash
 curl http://localhost:8080/nonexistent.html
@@ -73,7 +73,7 @@ curl http://localhost:8080/nonexistent.html
 
 Expected response: 404 Not Found
 
-    4.	Attempt directory traversal (protected):
+**Attempt directory traversal (protected):**
 
 ```bash
 curl http://localhost:8080/../../../../etc/passwd
