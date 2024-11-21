@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var port string
+
 var rootCmd = &cobra.Command{
 	Use:   "cc-web-server",
 	Short: "A brief description of your application",
@@ -20,7 +22,7 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		s := internal.InitServer("8080")
+		s := internal.InitServer(port)
 		s.StartServer()
 	},
 }
@@ -33,5 +35,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	rootCmd.Flags().StringVarP(&port, "port", "p", "8080", "The port to listen on")
 }
