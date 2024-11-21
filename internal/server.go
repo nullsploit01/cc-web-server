@@ -3,9 +3,8 @@ package internal
 import (
 	"bufio"
 	"fmt"
-	"io"
-	"log"
 	"net"
+	"strings"
 	"sync"
 )
 
@@ -36,24 +35,57 @@ func (s *Server) StartServer() error {
 			fmt.Println("Error accepting connection:", err)
 			continue
 		}
-		go s.handleConnection(c)
+		go HandleConnection(c)
 	}
 }
 
-func (s *Server) handleConnection(conn net.Conn) {
+func HTTPResponse(conn net.Conn, statusCode int, body string) {
+	statusText := map[int]string{
+		200: "OK",
+		404: "Not Found",
+		500: "Internal Server Error",
+	}[statusCode]
+
+	response := fmt.Sprintf(
+		"HTTP/1.1 %d %s\r\nContent-Length: %d\r\nContent-Type: text/plain\r\n\r\n%s",
+		statusCode, statusText, len(body), body,
+	)
+
+	conn.Write([]byte(response))
+	conn.Close()
+}
+
+func HandleConnection(conn net.Conn) {
 	defer conn.Close()
+
 	reader := bufio.NewReader(conn)
-	fmt.Printf("Accepted connection from %s\n", conn.RemoteAddr().String())
+	requestLine, err := reader.ReadString('\n')
+	if err != nil {
+		fmt.Println("Error reading request:", err)
+		return
+	}
 
-	for {
-		command, err := reader.ReadString('\n')
-		if err != nil {
-			if err != io.EOF {
-				fmt.Println("Error reading from client:", err)
-			}
-			break
-		}
+	requestLine = strings.TrimSpace(requestLine)
+	parts := strings.Split(requestLine, " ")
+	if len(parts) < 3 {
+		HTTPResponse(conn, 400, "Bad Request")
+		return
+	}
 
-		log.Println(command)
+	method, path, protocol := parts[0], parts[1], parts[2]
+	fmt.Printf("Method: %s, Path: %s, Protocol: %s\n", method, path, protocol)
+
+	if protocol != "HTTP/1.1" {
+		HTTPResponse(conn, 505, "HTTP Version Not Supported")
+		return
+	}
+
+	switch path {
+	case "/":
+		HTTPResponse(conn, 200, "Working"+"\n")
+	case "/sup":
+		HTTPResponse(conn, 200, "Sup"+"\n")
+	default:
+		HTTPResponse(conn, 404, "Not Found"+"\n")
 	}
 }
